@@ -1,0 +1,25 @@
+# Environments & Secrets
+.env
+.env*
+*.env
+*.env.*
+.env.example
+.env.production.example
+*.local
+*.local.*
+*.local.txt
+seed_credentials.local.txt
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Databases
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Uploads
+uploads/

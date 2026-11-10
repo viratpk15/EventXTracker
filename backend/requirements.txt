@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+gunicorn
+sqlalchemy
+pydantic
+argon2-cffi
+pyjwt
+reportlab
+python-multipart
+pytest
+httpx
+python-dotenv
+pypdf
+psycopg2-binary

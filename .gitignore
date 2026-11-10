@@ -1,0 +1,48 @@
+# Environments & Secrets
+.env
+.env*
+*.env
+*.env.*
+.env.example
+.env.production.example
+*.local
+*.local.*
+*.local.txt
+seed_credentials.local.txt
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Databases & local sqlite
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Uploads & user generated files
+uploads/
+backend/uploads/
+**/uploads/
+
+# Node
+node_modules/
+dist/
+dist-ssr/
+*.tsbuildinfo
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+.agents/
+.vscode/
+.idea/

@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: eventxtracker-backend
+    runtime: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: DATABASE_URL
+        value: sqlite:///./eventxtracker.db
+      - key: SECRET_KEY
+        generateValue: true
+      - key: BOOTSTRAP_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: http://localhost:5173,https://*.vercel.app
+      - key: UPLOAD_DIR
+        value: ./uploads
+      - key: APP_TIMEZONE
+        value: Asia/Kolkata
+
