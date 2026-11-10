@@ -82,7 +82,7 @@ export default function AccessDenied({ requiredRole, currentRole }: AccessDenied
             Go to Your Dashboard
           </button>
           <button
-            onClick={() => api.logout()}
+            onClick={() => api.logout(navigate)}
             className="py-2.5 px-4 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 text-sm font-semibold transition-all"
           >
             Sign Out

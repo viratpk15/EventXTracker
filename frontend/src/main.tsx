@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
 import './index.css'
 import Login from './pages/Login'
 import StudentLogin from './pages/StudentLogin'
@@ -21,11 +21,11 @@ import ErrorBoundary from './components/ui/ErrorBoundary'
 
 function Guard({ children, type }: { children: React.ReactElement; type?: string }) {
   const token = localStorage.getItem('ex_token')
-  const currentType = localStorage.getItem('ex_type')
+  const currentType = (localStorage.getItem('ex_type') || '').toUpperCase()
 
   if (!token) {
-    if (type === 'AUTHORITY') return <Navigate to="/authority/login" replace />
-    if (type === 'FACULTY') return <Navigate to="/faculty/login" replace />
+    if (type === 'AUTHORITY' || currentType === 'AUTHORITY') return <Navigate to="/authority/login" replace />
+    if (type === 'FACULTY' || currentType === 'FACULTY') return <Navigate to="/faculty/login" replace />
     return <Navigate to="/student/login" replace />
   }
 
@@ -48,6 +48,21 @@ function Guard({ children, type }: { children: React.ReactElement; type?: string
   return children
 }
 
+function RoleLoginRedirect() {
+  const { role } = useParams<{ role: string }>()
+  const clean = (role || '').toLowerCase()
+  if (clean === 'faculty') return <Navigate to="/faculty/login" replace />
+  if (clean === 'authority') return <Navigate to="/authority/login" replace />
+  return <Navigate to="/student/login" replace />
+}
+
+function DynamicLoginRedirect() {
+  const lastType = (localStorage.getItem('ex_type') || '').toUpperCase()
+  if (lastType === 'FACULTY') return <Navigate to="/faculty/login" replace />
+  if (lastType === 'AUTHORITY') return <Navigate to="/authority/login" replace />
+  return <Navigate to="/student/login" replace />
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ErrorBoundary>
@@ -57,9 +72,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <Route path="/authority/login" element={<AuthorityLogin />} />
         <Route path="/student/login" element={<StudentLogin />} />
         <Route path="/faculty/login" element={<FacultyLogin />} />
-        <Route path="/login" element={<Navigate to="/student/login" replace />} />
-        <Route path="/login/:role" element={<Navigate to="/student/login" replace />} />
-        <Route path="/" element={<Navigate to="/student/login" replace />} />
+        <Route path="/login/:role" element={<RoleLoginRedirect />} />
+        <Route path="/login" element={<DynamicLoginRedirect />} />
+        <Route path="/" element={<DynamicLoginRedirect />} />
 
         {/* Authority Portal Routes */}
         <Route path="/authority" element={<Navigate to="/authority/dashboard" replace />} />

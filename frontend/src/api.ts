@@ -28,6 +28,13 @@ export function getAccountType(): string | null {
   return localStorage.getItem('ex_type')
 }
 
+export function determineLoginPath(role?: string | null): string {
+  const clean = (role || '').toUpperCase()
+  if (clean === 'FACULTY') return '/faculty/login'
+  if (clean === 'AUTHORITY') return '/authority/login'
+  return '/student/login'
+}
+
 async function req(path: string, opts: RequestInit = {}): Promise<any> {
   const token = getToken()
   const isFormData = opts.body instanceof FormData
@@ -46,10 +53,11 @@ async function req(path: string, opts: RequestInit = {}): Promise<any> {
   })
 
   if (res.status === 401) {
-    const wasAuthority = localStorage.getItem('ex_type') === 'AUTHORITY'
+    const target = determineLoginPath(localStorage.getItem('ex_type'))
     localStorage.removeItem('ex_token')
     localStorage.removeItem('ex_type')
-    window.location.href = wasAuthority ? '/authority/login' : '/student/login'
+    try { sessionStorage.clear() } catch {}
+    window.location.replace(`${window.location.origin}${target}`)
     throw new Error('Unauthorized')
   }
 
@@ -137,11 +145,21 @@ export const api = {
     window.URL.revokeObjectURL(url)
   },
 
-  logout: () => {
-    const wasAuthority = localStorage.getItem('ex_type') === 'AUTHORITY'
+  logout: (navigateFn?: (path: string) => void) => {
+    const role = localStorage.getItem('ex_type')
+    const target = determineLoginPath(role)
     localStorage.removeItem('ex_token')
     localStorage.removeItem('ex_type')
-    window.location.href = wasAuthority ? '/authority/login' : '/student/login'
+    try {
+      sessionStorage.clear()
+    } catch {}
+
+    if (typeof navigateFn === 'function') {
+      try {
+        navigateFn(target)
+      } catch {}
+    }
+    window.location.replace(`${window.location.origin}${target}`)
   },
 
   getDemoCredentials: () => req('/demo/credentials'),
