@@ -1,6 +1,5 @@
 {
   "framework": "vite",
-  "cleanUrls": true,
   "rewrites": [
     {
       "source": "/(.*)",
@@ -18,4 +17,3 @@
     }
   ]
 }
-
