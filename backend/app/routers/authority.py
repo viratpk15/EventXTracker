@@ -722,3 +722,25 @@ def batch_promote_students(body: PromoteSemesterIn, db: Session = Depends(get_db
         "message": f"Successfully promoted {promoted_count} students ({graduated_count} transitioned to graduate status)."
     }
 
+
+@router.get("/demo-status")
+def get_demo_status_endpoint(db: Session = Depends(get_db), actor: User = Depends(require_authority)):
+    """Check whether demo/testing data is currently active."""
+    from ..seeder import get_demo_status
+    return get_demo_status(db)
+
+
+@router.post("/purge-seed-data")
+def purge_seed_data_endpoint(db: Session = Depends(get_db), actor: User = Depends(require_authority)):
+    """Permanently purge all seeded demo events, forms, leadership, and test accounts after evaluation."""
+    from ..seeder import purge_demo_dataset
+    return purge_demo_dataset(db, actor_id=actor.id)
+
+
+@router.post("/reseed-demo-data")
+def reseed_demo_data_endpoint(db: Session = Depends(get_db), actor: User = Depends(require_authority)):
+    """Re-seed the demo campus events and test accounts for demonstration or testing."""
+    from ..seeder import seed_demo_dataset
+    return seed_demo_dataset(db, force=True)
+
+

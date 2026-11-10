@@ -8,9 +8,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from sqlalchemy import inspect
 from .config import settings
 from .db import Base, engine, get_db
-from .models import AccountType, AccountStatus, User, Department, AuditLog, BRANCHES
+from .models import AccountType, AccountStatus, User, Department, AuditLog, BRANCHES, Event
 from .security import hash_password
 from .routers import auth, authority, events, governance, academics, misc, reports
 
@@ -19,16 +20,17 @@ Base.metadata.create_all(bind=engine)
 
 def ensure_schema_columns(engine):
     try:
+        insp = inspect(engine)
         with engine.connect() as conn:
             for table_name, table in Base.metadata.tables.items():
                 try:
-                    res = conn.exec_driver_sql(f"PRAGMA table_info({table_name});").fetchall()
-                    existing = {r[1] for r in res}
-                    for col in table.columns:
-                        if col.name not in existing:
-                            col_type = col.type.compile(engine.dialect)
-                            conn.exec_driver_sql(f"ALTER TABLE {table_name} ADD COLUMN {col.name} {col_type};")
-                            conn.commit()
+                    if insp.has_table(table_name):
+                        existing = {c["name"] for c in insp.get_columns(table_name)}
+                        for col in table.columns:
+                            if col.name not in existing:
+                                col_type = col.type.compile(engine.dialect)
+                                conn.exec_driver_sql(f"ALTER TABLE {table_name} ADD COLUMN {col.name} {col_type};")
+                                conn.commit()
                 except Exception:
                     pass
     except Exception:
@@ -52,6 +54,19 @@ async def lifespan(app: FastAPI):
         if not db.query(Department).filter_by(code=code).first():
             db.add(Department(code=code, name=names[code]))
     db.commit()
+
+    # Production/Evaluation auto-seed: If database has 0 events and not running in pytest,
+    # automatically seed realistic campus events and test accounts so they are immediately visible.
+    if "pytest" not in sys.modules:
+        seed_env = os.getenv("SEED_DEMO_DATA", "true").lower()
+        if seed_env in ("true", "1", "yes") or settings.SEED_ENABLED:
+            from .seeder import seed_demo_dataset
+            event_count = db.query(Event).count()
+            if event_count == 0:
+                print("🌟 [Auto-Seed] No events found in database. Seeding realistic VVCE campus demo dataset...")
+                res = seed_demo_dataset(db)
+                print(f"✅ [Auto-Seed] {res.get('message')}")
+
     db.close()
     yield
 
@@ -99,6 +114,13 @@ def bootstrap_authority(body: BootstrapIn, db: Session = Depends(get_db)):
     db.add(AuditLog(actor_id=None, action="AUTHORITY_BOOTSTRAPPED", entity="user", detail=body.email))
     db.commit()
     return {"ok": True, "authority_id": u.id}
+
+
+@app.get("/api/v1/demo/credentials")
+def get_public_demo_credentials(db: Session = Depends(get_db)):
+    """Provides test login credentials for institutional preview and evaluation."""
+    from .seeder import get_demo_status
+    return get_demo_status(db)
 
 
 @app.get("/api/v1/health")

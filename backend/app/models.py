@@ -173,6 +173,7 @@ class Event(Base):
     poster_url = Column(String(500), nullable=True)
     selection_mode = Column(String(40), default="MANUAL")       # MANUAL | ALLOW_ALL_ELIGIBLE_REGISTRATIONS
     status = Column(Enum(EventStatus), default=EventStatus.UPCOMING, nullable=False)
+    is_seeded = Column(Boolean, default=False, nullable=False)
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), default=utcnow)
     updated_at = Column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)

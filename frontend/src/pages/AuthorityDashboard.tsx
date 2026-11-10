@@ -81,6 +81,11 @@ export default function AuthorityDashboard({ initialTab }: { initialTab?: Tab })
   const [savingSettings, setSavingSettings] = useState(false)
   const [promotionResult, setPromotionResult] = useState<any>(null)
 
+  // Demo & Testing dataset management
+  const [demoStatus, setDemoStatus] = useState<any>(null)
+  const [demoLoading, setDemoLoading] = useState(false)
+  const [demoActionMsg, setDemoActionMsg] = useState('')
+
   // Filters for accounts directory
   const [searchQuery, setSearchQuery] = useState('')
   const [roleFilter, setRoleFilter] = useState('')
@@ -127,7 +132,7 @@ export default function AuthorityDashboard({ initialTab }: { initialTab?: Tab })
     setLoading(true)
     setError('')
     try {
-      const [d, a, depts, gov, aud, acad, myProfile] = await Promise.all([
+      const [d, a, depts, gov, aud, acad, myProfile, demoSt] = await Promise.all([
         api.get('/authority/dashboard'),
         api.get('/authority/accounts'),
         api.get('/authority/departments'),
@@ -135,12 +140,16 @@ export default function AuthorityDashboard({ initialTab }: { initialTab?: Tab })
         api.get('/authority/audit?limit=150'),
         api.get('/authority/academic-settings').catch(() => null),
         api.get('/authority/auth/me').catch(() => null),
+        api.getDemoStatus().catch(() => null),
       ])
       setDash(d)
       setAccounts(a)
       setDepartments(depts)
       setGovernance(gov)
       setAuditLogs(aud)
+      if (demoSt) {
+        setDemoStatus(demoSt)
+      }
       if (acad) {
         setAcademicData(acad)
         if (acad.settings) {
@@ -158,6 +167,40 @@ export default function AuthorityDashboard({ initialTab }: { initialTab?: Tab })
       setError(e.message || 'Failed to load dashboard')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handlePurgeDemoData() {
+    if (!window.confirm("⚠️ WARNING: This will permanently delete all seeded test events, dynamic forms, leadership appointments, and demo accounts created for testing.\n\nAny real institutional accounts or events created by you will remain intact.\n\nAre you sure you want to purge all demo data?")) {
+      return
+    }
+    setDemoLoading(true)
+    setDemoActionMsg('')
+    try {
+      const res = await api.purgeDemoData()
+      setDemoActionMsg(`✅ ${res.message || 'Demo testing data purged successfully.'}`)
+      await loadAll()
+    } catch (err: any) {
+      setDemoActionMsg(`❌ Error: ${err.message}`)
+    } finally {
+      setDemoLoading(false)
+    }
+  }
+
+  async function handleReseedDemoData() {
+    if (!window.confirm("🌱 Re-seed the realistic VVCE demo dataset with events, forms, and test accounts?")) {
+      return
+    }
+    setDemoLoading(true)
+    setDemoActionMsg('')
+    try {
+      const res = await api.reseedDemoData()
+      setDemoActionMsg(`✅ ${res.message || 'Demo testing data re-seeded successfully.'}`)
+      await loadAll()
+    } catch (err: any) {
+      setDemoActionMsg(`❌ Error: ${err.message}`)
+    } finally {
+      setDemoLoading(false)
     }
   }
 
@@ -1152,6 +1195,77 @@ export default function AuthorityDashboard({ initialTab }: { initialTab?: Tab })
                 </tbody>
               </table>
             </div>
+          </div>
+
+          {/* Evaluation & Testing Data Management Card */}
+          <div className="card space-y-4 border-2 border-indigo-200 dark:border-indigo-900/60 bg-gradient-to-r from-indigo-50/50 via-white to-purple-50/40 dark:from-indigo-950/20 dark:via-slate-900 dark:to-purple-950/20">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">
+                    Evaluation & Testing Data Management
+                  </h3>
+                  <span className="badge badge-primary text-[10px] font-mono">DEMO SEEDER</span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Control seeded campus events and evaluation accounts. You can inspect all features with pre-populated events, and purge them whenever you are ready for real production usage.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleReseedDemoData}
+                  disabled={demoLoading}
+                  className="btn btn-secondary btn-sm text-xs font-semibold"
+                >
+                  🌱 Re-seed Demo Data
+                </button>
+                <button
+                  type="button"
+                  onClick={handlePurgeDemoData}
+                  disabled={demoLoading}
+                  className="btn btn-danger btn-sm text-xs font-bold shadow-xs hover:bg-rose-700"
+                >
+                  🗑️ Purge Test Data
+                </button>
+              </div>
+            </div>
+
+            {demoActionMsg && (
+              <div className="p-3 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200">
+                {demoActionMsg}
+              </div>
+            )}
+
+            {demoStatus && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 text-xs">
+                <div className="p-2.5 rounded-lg bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
+                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Status</span>
+                  <span className={`font-bold ${demoStatus.is_demo_active ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'}`}>
+                    {demoStatus.is_demo_active ? '● Active in DB' : '○ Clean / Purged'}
+                  </span>
+                </div>
+                <div className="p-2.5 rounded-lg bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
+                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Seeded Events</span>
+                  <span className="font-extrabold text-slate-900 dark:text-slate-100 text-sm">
+                    {demoStatus.seeded_events_count} Events
+                  </span>
+                </div>
+                <div className="p-2.5 rounded-lg bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
+                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Seeded Accounts</span>
+                  <span className="font-extrabold text-slate-900 dark:text-slate-100 text-sm">
+                    {demoStatus.seeded_users_count} Users
+                  </span>
+                </div>
+                <div className="p-2.5 rounded-lg bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
+                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Test Passwords</span>
+                  <span className="font-mono text-purple-600 dark:text-purple-400 font-bold">
+                    faculty123 / student123
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

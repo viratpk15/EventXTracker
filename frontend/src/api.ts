@@ -144,6 +144,11 @@ export const api = {
     window.location.href = wasAuthority ? '/authority/login' : '/student/login'
   },
 
+  getDemoCredentials: () => req('/demo/credentials'),
+  getDemoStatus: () => req('/authority/demo-status'),
+  purgeDemoData: () => req('/authority/purge-seed-data', { method: 'POST' }),
+  reseedDemoData: () => req('/authority/reseed-demo-data', { method: 'POST' }),
+
   resolveFileUrl,
   getBaseUrl: getApiBaseUrl,
 }

@@ -73,36 +73,43 @@ If creating a Web Service manually without Blueprints:
 
 ---
 
-## 🔐 3. Initial Production Bootstrap
+## 🧪 3. Demo Dataset & Testing in Production
 
-Once both backend and frontend are live:
+To allow immediate evaluation in production without manual data entry, **EventXTracker includes an automatic Production Demo Seeder**:
+- On first startup on Render, if 0 events exist, it automatically seeds 5 realistic campus events (TechFest Hackathon, Robotics Summit, Cultural Carnival, Sports Olympiad, DevOps Workshop) along with custom dynamic forms, appointed student coordinators, registered candidates, and test credentials.
 
-### Step 1: Bootstrap the Primary Authority Account
-Run this one-time command from your local terminal (or via curl) against your live Render backend:
+### Ready-to-Test Credentials
 
-```bash
-curl -X POST https://your-backend-app.onrender.com/api/v1/bootstrap/authority \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "authority@vvce.ac.in",
-    "password": "AuthoritySuperSecure123!",
-    "bootstrap_secret": "YOUR_BOOTSTRAP_SECRET_FROM_RENDER"
-  }'
-```
-Response:
-```json
-{"ok": true, "authority_id": 1}
-```
+| Role | Email | Password | Description |
+|---|---|---|---|
+| **Institutional Authority** | `authority@vvce.ac.in` | `authority123` | Full administrative control, bulk import, governance |
+| **Faculty Coordinator / HOD** | `faccse01@vvce.ac.in` | `faculty123` | CSE HOD & TechFest Faculty Coordinator |
+| **Faculty Coordinator** | `facise01@vvce.ac.in` | `faculty123` | ISE HOD & Cultural Fest Coordinator |
+| **Student President** | `vvcecse0001@vvce.ac.in` | `student123` | Appointed President (Sara Sharma) for TechFest |
+| **Student Vice President** | `vvcecse0002@vvce.ac.in` | `student123` | Appointed Vice President (Diya Patel) for TechFest |
 
-### Step 2: Sign In & Populate Campus Users
-1. Open your Vercel frontend: `https://your-app.vercel.app/authority/login`.
-2. Sign in with `authority@vvce.ac.in` and your chosen password.
-3. Use the **Bulk Import** tab to upload students and faculty rosters via CSV, or provision accounts individually.
-4. Create events, customize forms in the **Dynamic Form Studio**, and appoint student coordinators!
+*(Clicking the quick-fill pill buttons on each login page fills these credentials automatically!)*
 
 ---
 
-## 🔍 4. Production Verification Checklist
+## 🗑️ 4. Removing Test Data After Evaluation
+
+When you finish evaluation and want to switch to a 100% clean, real college database:
+1. Log in to the **Authority Portal** (`/authority/login`) as `authority@vvce.ac.in`.
+2. Navigate to the **Governance** tab.
+3. In the **Evaluation & Testing Data Management** card:
+   - Click **"🗑️ Purge Test Data"** and confirm.
+   - All sample seeded events, test candidate forms, demo students, and test faculty accounts will be permanently erased.
+   - Your primary Authority administrator account and real college data remain completely untouched!
+4. Alternatively, you can run a POST request:
+   ```bash
+   curl -X POST https://your-backend-app.onrender.com/api/v1/authority/purge-seed-data \
+     -H "Authorization: Bearer <AUTHORITY_TOKEN>"
+   ```
+
+---
+
+## 🔍 5. Production Verification Checklist
 
 | Item | Status | Verification Check |
 |---|---|---|
